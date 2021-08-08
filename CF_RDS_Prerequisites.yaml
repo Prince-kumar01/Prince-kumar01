@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+#-----------------------------------DB Subnet Group-------------------------#
+  DBSubnetGroup1:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: DB Subnet Group for private subnet in 1a and 1b AZ.
+      DBSubnetGroupName: db_subnet_group_1
+
+      SubnetIds: 
+        - "{{resolve:ssm:private-subnet-1a-id:1}}"
+        - "{{resolve:ssm:private-subnet-1b-id:1}}"
+
+#-----------------------------------DB Parameter Group-------------------#
+  MYSQLDBParameterGroup:    
+    Type: AWS::RDS::DBParameterGroup
+    Properties: 
+      Description: Custom Parameter Group for mysql8.0
+      Family: mysql8.0
+      Parameters:
+        general_log: true
+        slow_query_log: true        
+      
+ 
+#-------------------------------Outputs-------------------------------#          
+Outputs:
+  MYSQLDBParameterGroupName:
+    Description: MYSQLDBParameterGroup Name
+    Value: !Ref MYSQLDBParameterGroup
+    Export: 
+      Name: !Sub "${AWS::StackName}-mysql-ParameterGroupName"
+      
+ 

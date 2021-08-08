@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Application:
+    Description: Select Application
+    Type: String
+    AllowedValues:
+      - Ghostblog
+
+  Environment:
+    Description: Select Environment
+    Type: String
+    AllowedValues:       
+      - DEV
+      - TEST
+      - PROD
+      
+  DBEngine:
+    Description: Select DBEngine
+    Type: String
+    AllowedValues:
+      - mysql
+
+  DBVersion:
+    Description: Select DBVersion
+    Type: String
+    AllowedValues:
+      - 8.0.23
+      
+  AvailabilityZone:
+    Description: Select AvailabilityZone
+    Type: String
+    AllowedValues:
+      - eu-west-1a
+      - eu-west-1b
+  
+  InstanceType:
+    Description: Select InstanceType
+    Type: String
+    AllowedValues:           
+      - db.t2.micro
+      
+  AllocatedStorage:
+    Description: Select AllocatedStorage
+    Type: Number
+    AllowedValues:
+      - 20
+
+      
+  MultiAZ:
+    Description: Select MultiAZ
+    Type: String
+    AllowedValues:
+      - true
+      - false
+
+  EnhancedMonitoring:
+    Description: Select EnhancedMonitoring
+    Type: String
+    AllowedValues:
+      - true
+      - false      
+      
+Conditions:
+  MYSQL_DB: !Equals [ !Ref DBEngine, mysql ]
+  PRODENV_DB: !Equals [ !Ref Environment, PROD ]
+  ENHANCED_MONITORING: !Equals [ !Ref EnhancedMonitoring, true ]
+
+Resources:
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties: 
+      Engine: !Ref DBEngine
+      EngineVersion: !Ref DBVersion
+      DBInstanceIdentifier: !Join ['-', [!Ref Application, !Ref Environment] ]
+      MasterUsername: !Join ['_', [!Ref Application, !Ref Environment, ADMIN] ]  
+      MasterUserPassword: !Join ['_', [!Ref Application, !Ref Environment, Master, Admin] ]
+      DBInstanceClass: !Ref InstanceType
+      StorageType: gp2
+      AllocatedStorage: !Ref AllocatedStorage
+      MultiAZ: !Ref MultiAZ
+      DBSubnetGroupName: db_subnet_group_1
+      PubliclyAccessible: false
+      VPCSecurityGroups:
+        - Fn::ImportValue:
+            !Join ["-", [db,securitygroup,stack,SG]]
+      AvailabilityZone: !Ref AvailabilityZone
+      Port: 3306
+      DBName: !Sub '${Application}${Environment}'
+      DBParameterGroupName: default.mysql8.0
+      CopyTagsToSnapshot: false
+      StorageEncrypted: false
+      EnableCloudwatchLogsExports:
+        - general
+        - slowquery
+        - audit
+      AutoMinorVersionUpgrade: false
+      DeletionProtection: true
+      Tags:
+        - Key: Name
+          Value: !Join [ "_", [ RDS, !Ref Application, !Ref Environment ] ]
+          
+        - Key: Application 
+          Value: !Ref Application  
+          
+        - Key: Environment 
+          Value: !Ref Environment
+     
+         

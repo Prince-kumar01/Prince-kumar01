@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Application:
+    Description: Select Application
+    Type: String
+    AllowedValues:
+      - Ghostblog
+      
+  Environment:
+    Description: Select Environment
+    Type: String
+    AllowedValues:
+      - DEV
+      - TEST
+      - PROD
+  
+Conditions:
+    # Conditions to decide which SG (Security Group) to create 
+    Ghostblog-DEV: !And
+    - !Equals [!Ref Application, Ghostblog]
+    - !Equals [!Ref Environment, DEV]
+
+    Ghostblog-TEST: !And
+    - !Equals [!Ref Application, Ghostblog]
+    - !Equals [!Ref Environment, TEST]
+    
+    Ghostblog-PROD: !And
+    - !Equals [!Ref Application, Ghostblog]
+    - !Equals [!Ref Environment, PROD]
+    
+Resources:
+  SGGhostblogDEVDB:
+    Type: 'AWS::EC2::SecurityGroup'
+    Condition: Ghostblog-DEV
+    Properties:
+      VpcId: "{{resolve:ssm:vpc-id:1}}"
+      GroupDescription: Security Group For Ghostblog DEV DB.
+      GroupName: SG-Ghostblog-DEV-DB
+      SecurityGroupIngress:   
+        - Description: Rule for Ghostblog server to communicate to DEV DB 
+          IpProtocol: tcp        
+          FromPort: 1521
+          ToPort: 1521
+          CidrIp: 10.0.0.0/16          
+              
+        
+      SecurityGroupEgress:
+        - Description: Rule for Outbound Communication on port 80
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+        - Description: Rule for Outbound Communication on port 443
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          
+      Tags:
+        - Key: Name
+          Value: SG-Ghostblog-DEV-DB
+
+  SGGhostblogTESTDB:
+    Type: 'AWS::EC2::SecurityGroup'
+    Condition: Ghostblog-TEST
+    Properties:
+      VpcId: "{{resolve:ssm:vpc-id:1}}"
+      GroupDescription: Security Group For Ghostblog TEST DB.
+      GroupName: SG-Ghostblog-TEST-DB
+      SecurityGroupIngress: 
+        - Description: Rule for Ghostblog server to communicate to TEST DB 
+          IpProtocol: tcp        
+          FromPort: 1521
+          ToPort: 1521
+          CidrIp: 10.0.0.0/16          
+              
+        
+      SecurityGroupEgress:
+        - Description: Rule for Outbound Communication on port 80
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+        - Description: Rule for Outbound Communication on port 443
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          
+      Tags:
+        - Key: Name
+          Value: SG-Ghostblog-TEST-DB
+          
+          
+  SGGhostblogPRODDB:
+    Type: 'AWS::EC2::SecurityGroup'
+    Condition: Ghostblog-PROD
+    Properties:
+      VpcId: "{{resolve:ssm:vpc-id:1}}"
+      GroupDescription: Security Group For Ghostblog PROD DB.
+      GroupName: SG-Ghostblog-PROD-DB
+      SecurityGroupIngress:
+        - Description: Rule for Ghostblog server to communicate to PROD DB 
+          IpProtocol: tcp        
+          FromPort: 1521
+          ToPort: 1521
+          CidrIp: 10.0.0.0/16  
+
+      SecurityGroupEgress:
+        - Description: Rule for Outbound Communication on port 80
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+        - Description: Rule for Outbound Communication on port 443
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          
+      Tags:
+        - Key: Name
+          Value: SG-Ghostblog-PROD-DB
+          
+          
+Outputs:
+  GhostblogDEVDBSG:
+    Condition: Ghostblog-DEV
+    Description: Ghostblog DEV DB Security Group ID
+    Value: !GetAtt SGGhostblogDEVDB.GroupId
+    Export: 
+      Name: !Sub "${AWS::StackName}-SG"
+  
+  GhostblogTESTDBSG:
+    Condition: Ghostblog-TEST
+    Description: Ghostblog TEST DB Security Group ID
+    Value: !GetAtt SGGhostblogTESTDB.GroupId
+    Export: 
+      Name: !Sub "${AWS::StackName}-SG"
+  
+  GhostblogPRODDBSG:
+    Condition: Ghostblog-PROD
+    Description: Ghostblog PROD DB Security Group ID
+    Value: !GetAtt SGGhostblogPRODDB.GroupId
+    Export: 
+      Name: !Sub "${AWS::StackName}-SG"      
+            

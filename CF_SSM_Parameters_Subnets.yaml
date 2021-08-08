@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+#---------------SSM Parameters-----------
+  VPCIDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: vpc-id
+      Type: String
+      Value: vpc-00e95f34f237ed354
+      Description: SSM Parameter for VPC ID
+
+  PublicSubnet1aIDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: public-subnet-1a-id
+      Type: String
+      Value: subnet-05715b85cd0c13786
+      Description: SSM Parameter for Public Subnet in 1a AZ
+      
+  PublicSubnet1bIDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: public-subnet-1b-id
+      Type: String
+      Value: subnet-0c939593a0beede4c
+      Description: SSM Parameter for Public Subnet in 1b AZ
+      
+  PrivateSubnet1aIDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: private-subnet-1a-id
+      Type: String
+      Value: subnet-0cc37ae6cfa06268b
+      Description: SSM Parameter for Private Subnet in 1a AZ      
+      
+  PrivateSubnet1bIDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: private-subnet-1b-id
+      Type: String
+      Value: subnet-0d9d9d835e5a82ff9
+      Description: SSM Parameter for Private Subnet in 1b AZ      
+      

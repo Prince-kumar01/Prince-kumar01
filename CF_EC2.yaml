@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+   Application:
+    Description: Select Application
+    Type: String
+    AllowedValues:
+      - GhostBlogServer
+   InstanceTypeParameter:
+    Type: String
+    Default: t2.micro
+    Description: Enter instance size. Default is t2.micro.
+   WorkstationIp:
+    Type: String
+    Description: The IP address of the workstation that can SSH into the instance.
+   AMI:
+    Type: String
+    Default: ami-058b1b7fe545997ae
+    Description: The Linux AMI to use.
+   Key:
+    Type: String
+    Description: The key used to access the instance.
+   
+Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "Internet Group"
+      GroupDescription: "SSH and web traffic in, all traffic out."
+      VpcId: "{{resolve:ssm:vpc-id:1}}"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp:  10.0.0.0/16
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp:  10.0.0.0/16
+  Linux:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      SubnetId: "{{resolve:ssm:private-subnet-1a-id:1}}"
+      ImageId: !Ref AMI
+      InstanceType:
+        Ref: InstanceTypeParameter
+      SecurityGroupIds:
+        - Ref: InstanceSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+      
+      UserData: 
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            yum update -y
+            yum install -y cloud-init
+            cd /tmp
+            sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm            
+            sudo systemctl enable amazon-ssm-agent
+            sudo systemctl start amazon-ssm-agent
+
+Outputs:
+  PrivateIp:
+    Value:
+      Fn::GetAtt:
+        - Linux
+        - PrivateIp
+    Description: Server's PrivateIp Address
